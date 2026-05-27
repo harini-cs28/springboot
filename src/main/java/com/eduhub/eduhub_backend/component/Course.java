@@ -4,37 +4,38 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Course {
-    private int coursecode;
+
+    private String coursecode;
     private String subjectname;
     private int credits;
 
-    public Course(){
+    public Course() {
     }
 
-    public Course(int coursecode,String subjectname, int credits){
+    public Course(String coursecode, String subjectname, int credits) {
         this.coursecode = coursecode;
         this.subjectname = subjectname;
         this.credits = credits;
     }
 
-    public int getCoursecode() {
+    public String getCoursecode() {
         return coursecode;
     }
 
-    public String getSubjectname(){
-        return subjectname;
-    }
-
-    public int getCredits(){
-        return credits;
-    }
-
-    public void setCoursecode(int coursecode) {
+    public void setCoursecode(String coursecode) {
         this.coursecode = coursecode;
+    }
+
+    public String getSubjectname() {
+        return subjectname;
     }
 
     public void setSubjectname(String subjectname) {
         this.subjectname = subjectname;
+    }
+
+    public int getCredits() {
+        return credits;
     }
 
     public void setCredits(int credits) {

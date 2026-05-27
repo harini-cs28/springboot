@@ -1,9 +1,7 @@
 package com.eduhub.eduhub_backend.controller;
 
 import com.eduhub.eduhub_backend.component.Course;
-import com.eduhub.eduhub_backend.component.DemoService;
-import com.eduhub.eduhub_backend.component.Student;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.eduhub.eduhub_backend.exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,84 +12,114 @@ import java.util.List;
 @RestController
 @RequestMapping("courses")
 public class CourseController {
-    /*@Autowired //dependency - injection
-    Course courseService;
-    /*public CourseController(CourseService courseService){
-        this.courseService = courseService;
-    } */
-    /*@Autowired
-    DemoService demoService;
 
-    @GetMapping("get-course")
-    public String getCourse(){
-        return courseService.getCourse();
-    }
+    static List<Course> courseList = new ArrayList<>();
 
-    @GetMapping("get-service")
-    public String getService(){
-        return demoService.getService();
-    } */
-    private final Course course;
-
-    public CourseController(Course course) {
-        this.course = course;
-    }
-
-    @GetMapping("course")
-    public ResponseEntity<Course> getCourse(){
-        Course course = new Course(100,"Fullstack",4);
-        return new ResponseEntity<>(course, HttpStatus.OK);
+    static {
+        courseList.add(new Course("CS100","Fullstack",4));
+        courseList.add(new Course("CS101","OS",4));
+        courseList.add(new Course("CS102","Cloud computing",3));
+        courseList.add(new Course("CS103","Java",3));
+        courseList.add(new Course("CS104","Python",2));
     }
 
     @GetMapping("courses")
     public ResponseEntity<List<Course>> getCourses(){
-        List<Course> courseList = new ArrayList<>();
-        courseList.add(new Course(100,"Fullstack",4));
-        courseList.add(new Course(101,"OS",4));
-        courseList.add(new Course(102,"Cloud computing",3));
-        courseList.add(new Course(103,"Java",3));
-        courseList.add(new Course(104,"Python",2));
         return new ResponseEntity<>(courseList,HttpStatus.OK);
     }
 
+    // http://localhost:8080/courses/CS101
+    @GetMapping("{coursecode}")
+    public ResponseEntity<Course> getCourse(
+            @PathVariable("coursecode") String coursecode){
+
+        return courseList.stream()
+                .filter(c -> c.getCoursecode().equalsIgnoreCase(coursecode))
+                .findFirst()
+                .map(ResponseEntity::ok)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Course",
+                                "CourseCode",
+                                coursecode));
+    }
+
     @GetMapping("{coursecode}/{subjectname}/{credits}")
-    public ResponseEntity<Course> coursePathVariable(@PathVariable("coursecode") int coursecode,
-                                                     @PathVariable("subjectname") String subjectname,
-                                                      @PathVariable("credits") int credits
-    ) {
+    public ResponseEntity<Course> coursePathVariable(
+            @PathVariable("coursecode") String coursecode,
+            @PathVariable("subjectname") String subjectname,
+            @PathVariable("credits") int credits){
+
         Course course = new Course(coursecode, subjectname, credits);
         return new ResponseEntity<>(course, HttpStatus.OK);
     }
 
-
-    // http://localhost:8080/coursequery?coursecode=101&subjectname=Java&credits=3
     @GetMapping("coursequery")
-    public ResponseEntity<Course> courseResponseEntity(@RequestParam int coursecode,
-                                                       @RequestParam String subjectname,
-                                                       @RequestParam int credits){
+    public ResponseEntity<Course> courseResponseEntity(
+            @RequestParam String coursecode,
+            @RequestParam String subjectname,
+            @RequestParam int credits){
 
         Course course = new Course(coursecode,subjectname,credits);
         return ResponseEntity.ok(course);
     }
 
     @PostMapping("createcourse")
-    public ResponseEntity<Course> createCourse(@RequestBody Course course){
+    public ResponseEntity<Course> createCourse(
+            @RequestBody Course course){
 
-        System.out.println(course.getCoursecode());
-        System.out.println(course.getSubjectname());
-        System.out.println(course.getCredits());
+        courseList.add(course);
         return ResponseEntity.ok(course);
     }
 
     @PutMapping("{coursecode}/update")
-    public ResponseEntity updateCourse(@PathVariable("coursecode") int coursecode,
-                                        @RequestBody Course course){
+    public ResponseEntity updateCourse(
+            @PathVariable("coursecode") String coursecode,
+            @RequestBody Course updateCourse){
+
+        Course course = courseList.stream()
+                .filter(c -> c.getCoursecode().equalsIgnoreCase(coursecode))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Course",
+                                "CourseCode",
+                                coursecode));
+
+        course.setCoursecode(updateCourse.getCoursecode());
+        course.setSubjectname(updateCourse.getSubjectname());
+        course.setCredits(updateCourse.getCredits());
+
         return ResponseEntity.accepted().body(course);
-//      return ResponseEntity.badRequest().body(("It doesn't have logic"));
     }
 
+    // Delete Course
     @DeleteMapping("{coursecode}/delete")
-    public ResponseEntity deleteCourse(@PathVariable("coursecode") int coursecode){
-        return ResponseEntity.ok(course);
+    public ResponseEntity deleteCourse(
+            @PathVariable("coursecode") String coursecode){
+
+        Course course = courseList.stream()
+                .filter(c -> c.getCoursecode().equalsIgnoreCase(coursecode))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Course",
+                                "CourseCode",
+                                coursecode));
+
+        courseList.remove(course);
+        return ResponseEntity.ok("Deleted Successfully");
+    }
+
+    @PutMapping("query/{coursecode}")
+    public String queryCourse(@PathVariable String coursecode){
+
+        if(coursecode.startsWith("*")){
+            throw new IllegalArgumentException(
+                    "It is having special character");
+        }else if(coursecode.startsWith("6")){
+            throw new RuntimeException();
+        }
+        return coursecode;
     }
 }
